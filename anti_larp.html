@@ -1,0 +1,839 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REALITY: ANTI_LARP ENGINE</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        background:
+            radial-gradient(circle at top left, #000000, transparent 35%),
+            radial-gradient(circle at bottom right, #000000, transparent 35%),
+            #000000;
+        color: #e7e9ee;
+    }
+
+    .container {
+        width: min(1100px, 94%);
+        margin: auto;
+        padding: 40px 0;
+    }
+
+    header {
+        margin-bottom: 30px;
+    }
+
+    .logo {
+        font-family: monospace;
+        letter-spacing: 4px;
+        color: #65d8ff;
+        font-size: 13px;
+    }
+
+    h1 {
+        margin: 8px 0;
+        font-size: clamp(32px, 6vw, 58px);
+        letter-spacing: -2px;
+    }
+
+    .subtitle {
+        color: #858b9c;
+        max-width: 700px;
+    }
+
+    .panel {
+        background: rgba(18, 21, 30, .82);
+        border: 1px solid #292e3d;
+        border-radius: 18px;
+        padding: 22px;
+        margin-bottom: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.25);
+        backdrop-filter: blur(14px);
+    }
+
+    .controls {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 15px;
+    }
+
+    @media(max-width: 700px) {
+        .controls {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    label {
+        display: block;
+        font-size: 12px;
+        color: #858b9c;
+        margin-bottom: 7px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    select,
+    input {
+        width: 100%;
+        padding: 13px 14px;
+        background: #0d1017;
+        border: 1px solid #303646;
+        color: white;
+        border-radius: 10px;
+        outline: none;
+        font-size: 15px;
+    }
+
+    select:focus,
+    input:focus {
+        border-color: #65d8ff;
+    }
+
+    .stats {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+    }
+
+    .stat {
+        padding: 10px 14px;
+        background: #0e1118;
+        border: 1px solid #292e3d;
+        border-radius: 10px;
+        font-family: monospace;
+        font-size: 13px;
+    }
+
+    .stat strong {
+        color: #65d8ff;
+    }
+
+    .results {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 12px;
+    }
+
+    .card {
+        position: relative;
+        padding: 17px;
+        border-radius: 13px;
+        background: #10131b;
+        border: 1px solid #292e3d;
+        transition: .15s;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        border-color: #485269;
+    }
+
+    .card.eliminated {
+        opacity: .3;
+        filter: grayscale(1);
+    }
+
+    .word {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 12px;
+    }
+
+    .tag {
+        display: inline-block;
+        font-size: 10px;
+        font-family: monospace;
+        padding: 4px 7px;
+        border-radius: 5px;
+        background: #202635;
+        color: #8fdbff;
+        margin-bottom: 10px;
+    }
+
+    .detail {
+        font-size: 12px;
+        color: #8c92a1;
+        margin: 5px 0;
+    }
+
+    .detail span {
+        color: #d8dbe3;
+    }
+
+    button {
+        margin-top: 12px;
+        width: 100%;
+        padding: 9px;
+        border: 1px solid #343b4c;
+        background: #171b25;
+        color: #bbbfc9;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: #202634;
+        color: white;
+    }
+
+    .confidence {
+        margin-top: 12px;
+        height: 5px;
+        background: #252a36;
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    .confidence div {
+        height: 100%;
+        background: #65d8ff;
+        width: 50%;
+    }
+
+    .analysis {
+        font-family: monospace;
+        color: #65d8ff;
+        min-height: 24px;
+    }
+
+    .warning {
+        color: #ff7189;
+    }
+
+    .footer {
+        text-align: center;
+        color: #4e5463;
+        font-size: 11px;
+        font-family: monospace;
+        margin-top: 30px;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <h1>Deduction Engine</h1>
+    <div class="subtitle">
+        Reverse-engineering the possible secret word from publicly observable
+        game information.
+    </div>
+</header>
+
+<div class="panel">
+
+    <div class="controls">
+
+        <div>
+            <label>Deck</label>
+            <select id="category">
+                <option value="ALL">All Categories</option>
+                <option value="Animals">Animals</option>
+                <option value="Foods">Foods</option>
+                <option value="Movies">Movies</option>
+                <option value="Places">Places</option>
+                <option value="Objects">Objects</option>
+                <option value="Jobs">Jobs</option>
+                <option value="Arcade">Arcade</option>
+            </select>
+        </div>
+
+        <div>
+            <label>Search / Observed Clue</label>
+            <input
+                id="search"
+                placeholder="e.g. shark, ocean, animal..."
+            >
+        </div>
+
+    </div>
+
+</div>
+
+<div class="panel">
+
+    <div class="stats">
+        <div class="stat">
+            CANDIDATES:
+            <strong id="count">0</strong>
+        </div>
+
+        <div class="stat">
+            ELIMINATED:
+            <strong id="eliminated">0</strong>
+        </div>
+
+        <div class="stat">
+            DECK:
+            <strong id="deckName">ALL</strong>
+        </div>
+    </div>
+
+    <div class="analysis" id="analysis">
+        Initializing deduction engine...
+    </div>
+
+</div>
+
+<div class="panel">
+    <div class="results" id="results"></div>
+</div>
+
+<div class="footer">
+    LARP ANALYSIS CORE // DATASET SIZE: 140 WORDS // v0.1
+</div>
+
+</div>
+
+<script>
+
+const DECKS = {
+    Animals:[
+        "Elephant","Giraffe","Penguin","Octopus","Kangaroo","Dolphin",
+        "Cheetah","Owl","Platypus","Flamingo","Hedgehog","Panda",
+        "Crocodile","Peacock","Otter","Camel","Koala","Sloth",
+        "Raccoon","Walrus"
+    ],
+
+    Foods:[
+        "Pizza","Sushi","Tacos","Pancakes","Ramen","Burrito","Lasagna",
+        "Dumplings","Curry","Waffles","Bagel","Falafel","Nachos",
+        "Risotto","Paella","Gyro","Poutine","Croissant","Ceviche","Churros"
+    ],
+
+    Movies:[
+        "Titanic","Jaws","Frozen","Inception","Shrek","Avatar","Friends",
+        "The Office","Stranger Things","Jurassic Park","The Matrix",
+        "Toy Story","Breaking Bad","Moana","Rocky","Ghostbusters",
+        "Spider-Man","Batman","Gladiator","Up"
+    ],
+
+    Places:[
+        "Paris","Tokyo","Grand Canyon","Sahara Desert","Times Square",
+        "Eiffel Tower","Mount Everest","Great Wall","Niagara Falls",
+        "Venice","Amazon Rainforest","Hawaii","Antarctica","Las Vegas",
+        "Yellowstone","London","Rome","Bali","Iceland","Dubai"
+    ],
+
+    Objects:[
+        "Umbrella","Toothbrush","Backpack","Stapler","Pillow","Flashlight",
+        "Mirror","Ladder","Blender","Wallet","Scissors","Candle",
+        "Thermostat","Keyboard","Suitcase","Broom","Headphones",
+        "Calendar","Doorbell","Kettle"
+    ],
+
+    Jobs:[
+        "Firefighter","Dentist","Pilot","Chef","Electrician","Librarian",
+        "Plumber","Vet","Journalist","Architect","Lifeguard","Barista",
+        "Surgeon","Mechanic","Teacher","Photographer","Farmer","Accountant",
+        "Tailor","Zookeeper"
+    ],
+
+    Arcade:[
+        "Pac-Man","Tetris","Space Invaders","Pinball","Joystick","Game Over",
+        "High Score","Power-Up","Boss Fight","Checkpoint","Extra Life",
+        "Cheat Code","Final Level","Arcade Token","Pixel Art","Speedrun",
+        "Side Quest","Loading Screen","Save Point","Combo"
+    ]
+};
+
+const HINTS = {
+    Elephant:"Big Ears",
+    Giraffe:"Long Neck",
+    Penguin:"Tuxedo Bird",
+    Octopus:"Eight Arms",
+    Kangaroo:"Pouch Hopper",
+    Dolphin:"Ocean Genius",
+    Cheetah:"Fastest Land Animal",
+    Owl:"Night Hunter",
+    Platypus:"Duck Bill",
+    Flamingo:"Pink Wader",
+    Hedgehog:"Spiky Ball",
+    Panda:"Bamboo Eater",
+    Crocodile:"River Ambusher",
+    Peacock:"Fan Tail",
+    Otter:"River Slider",
+    Camel:"Desert Hump",
+    Koala:"Eucalyptus Napper",
+    Sloth:"Slowest Mover",
+    Raccoon:"Trash Bandit",
+    Walrus:"Tusked Swimmer",
+
+    Pizza:"Cheesy Slice",
+    Sushi:"Raw Fish Roll",
+    Tacos:"Folded Shell",
+    Pancakes:"Stacked Griddle",
+    Ramen:"Noodle Broth",
+    Burrito:"Wrapped Tortilla",
+    Lasagna:"Layered Pasta",
+    Dumplings:"Steamed Pocket",
+    Curry:"Spiced Stew",
+    Waffles:"Griddle Squares",
+    Bagel:"Boiled Ring Bread",
+    Falafel:"Fried Chickpea Ball",
+    Nachos:"Loaded Chips",
+    Risotto:"Creamy Rice",
+    Paella:"Saffron Rice Pan",
+    Gyro:"Spit-Roasted Wrap",
+    Poutine:"Gravy Fries",
+    Croissant:"Buttery Flaky Pastry",
+    Ceviche:"Citrus-Cured Fish",
+    Churros:"Fried Dough Stick",
+
+    Titanic:"Sinking Ship Romance",
+    Jaws:"Killer Shark",
+    Frozen:"Ice Queen Sisters",
+    Inception:"Dream Within Dream",
+    Shrek:"Grumpy Green Ogre",
+    Avatar:"Blue Alien Planet",
+    Friends:"Six New Yorkers",
+    "The Office":"Mockumentary Workplace",
+    "Stranger Things":"Upside Down Town",
+    "Jurassic Park":"Cloned Dinosaurs",
+    "The Matrix":"Red Pill Simulation",
+    "Toy Story":"Living Toys",
+    "Breaking Bad":"Teacher Turned Cook",
+    Moana:"Ocean Chosen Voyager",
+    Rocky:"Underdog Boxer",
+    Ghostbusters:"Proton Pack Team",
+    "Spider-Man":"Web-Slinging Teen",
+    Batman:"Caped Vigilante",
+    Gladiator:"Arena Revenge",
+    Up:"Floating House",
+
+    Paris:"City Of Lights",
+    Tokyo:"Neon Megacity",
+    "Grand Canyon":"Massive Red Gorge",
+    "Sahara Desert":"Endless Sand Sea",
+    "Times Square":"Billboard Crossroads",
+    "Eiffel Tower":"Iron Lattice Landmark",
+    "Mount Everest":"Tallest Peak",
+    "Great Wall":"Ancient Border Wall",
+    "Niagara Falls":"Thundering Border Falls",
+    Venice:"Canal City",
+    "Amazon Rainforest":"Densest Jungle",
+    Hawaii:"Volcanic Island Chain",
+    Antarctica:"Frozen Continent",
+    "Las Vegas":"Neon Casino Strip",
+    Yellowstone:"Geyser National Park",
+    London:"Foggy Royal Capital",
+    Rome:"Ancient Empire Capital",
+    Bali:"Tropical Temple Island",
+    Iceland:"Fire And Ice Isle",
+    Dubai:"Desert Skyscraper City",
+
+    Umbrella:"Rain Shield",
+    Toothbrush:"Bristled Cleaner",
+    Backpack:"Shoulder Carrier",
+    Stapler:"Paper Binder",
+    Pillow:"Head Cushion",
+    Flashlight:"Handheld Beam",
+    Mirror:"Reflective Glass",
+    Ladder:"Climbing Rungs",
+    Blender:"Spinning Blades",
+    Wallet:"Card Holder",
+    Scissors:"Cutting Blades",
+    Candle:"Wax Flame",
+    Thermostat:"Wall Temperature Dial",
+    Keyboard:"Typing Keys",
+    Suitcase:"Packed Travel Case",
+    Broom:"Sweeping Bristles",
+    Headphones:"Ear Speakers",
+    Calendar:"Dated Grid",
+    Doorbell:"Entry Chime",
+    Kettle:"Boiling Spout",
+
+    Firefighter:"Hose And Helmet",
+    Dentist:"Tooth Checker",
+    Pilot:"Cockpit Flyer",
+    Chef:"Kitchen Commander",
+    Electrician:"Wire Fixer",
+    Librarian:"Book Keeper",
+    Plumber:"Pipe Fixer",
+    Vet:"Animal Doctor",
+    Journalist:"News Digger",
+    Architect:"Building Designer",
+    Lifeguard:"Pool Watcher",
+    Barista:"Coffee Maker",
+    Surgeon:"Operating Room Cutter",
+    Mechanic:"Engine Fixer",
+    Teacher:"Classroom Leader",
+    Photographer:"Lens Capturer",
+    Farmer:"Crop Grower",
+    Accountant:"Number Cruncher",
+    Tailor:"Clothes Fitter",
+    Zookeeper:"Animal Caretaker",
+
+    "Pac-Man":"Dot-Eating Ghost Chase",
+    Tetris:"Falling Block Puzzle",
+    "Space Invaders":"Descending Alien Rows",
+    Pinball:"Flipper Table Game",
+    Joystick:"Arcade Control Stick",
+    "Game Over":"The Final Screen",
+    "High Score":"Top Of The Board",
+    "Power-Up":"Temporary Ability Boost",
+    "Boss Fight":"Level's Big Enemy",
+    Checkpoint:"Mid-Level Restart Point",
+    "Extra Life":"One More Try",
+    "Cheat Code":"Secret Button Combo",
+    "Final Level":"The Last Stage",
+    "Arcade Token":"Coin For Play",
+    "Pixel Art":"Blocky Retro Graphics",
+    Speedrun:"Racing The Clock",
+    "Side Quest":"Optional Detour Mission",
+    "Loading Screen":"Wait Before Playing",
+    "Save Point":"Where Progress Locks In",
+    Combo:"Chained Move Sequence"
+};
+
+const DECOYS = {
+    Elephant:"Rhino",
+    Giraffe:"Ostrich",
+    Penguin:"Puffin",
+    Octopus:"Squid",
+    Kangaroo:"Wallaby",
+    Dolphin:"Porpoise",
+    Cheetah:"Leopard",
+    Owl:"Hawk",
+    Platypus:"Beaver",
+    Flamingo:"Heron",
+    Hedgehog:"Porcupine",
+    Panda:"Bear",
+    Crocodile:"Alligator",
+    Peacock:"Turkey",
+    Otter:"Beaver",
+    Camel:"Llama",
+    Koala:"Panda",
+    Sloth:"Anteater",
+    Raccoon:"Opossum",
+    Walrus:"Seal",
+
+    Pizza:"Flatbread",
+    Sushi:"Sashimi",
+    Tacos:"Quesadilla",
+    Pancakes:"Crepes",
+    Ramen:"Pho",
+    Burrito:"Enchilada",
+    Lasagna:"Manicotti",
+    Dumplings:"Gyoza",
+    Curry:"Stew",
+    Waffles:"French Toast",
+    Bagel:"Pretzel",
+    Falafel:"Hummus",
+    Nachos:"Tostada",
+    Risotto:"Pilaf",
+    Paella:"Jambalaya",
+    Gyro:"Kebab",
+    Poutine:"Chili Fries",
+    Croissant:"Danish",
+    Ceviche:"Poke",
+    Churros:"Beignets",
+
+    Titanic:"Poseidon",
+    Jaws:"Piranha",
+    Frozen:"Tangled",
+    Inception:"Interstellar",
+    Shrek:"Trolls",
+    Avatar:"Dune",
+    Friends:"Seinfeld",
+    "The Office":"Parks and Recreation",
+    "Stranger Things":"Dark",
+    "Jurassic Park":"King Kong",
+    "The Matrix":"Tron",
+    "Toy Story":"The Lego Movie",
+    "Breaking Bad":"Ozark",
+    Moana:"Encanto",
+    Rocky:"Creed",
+    Ghostbusters:"Men in Black",
+    "Spider-Man":"Daredevil",
+    Batman:"The Shadow",
+    Gladiator:"Braveheart",
+    Up:"Wall-E",
+
+    Paris:"Lyon",
+    Tokyo:"Osaka",
+    "Grand Canyon":"Bryce Canyon",
+    "Sahara Desert":"Gobi Desert",
+    "Times Square":"Piccadilly Circus",
+    "Eiffel Tower":"Space Needle",
+    "Mount Everest":"K2",
+    "Great Wall":"Hadrian's Wall",
+    "Niagara Falls":"Victoria Falls",
+    Venice:"Amsterdam",
+    "Amazon Rainforest":"Congo Rainforest",
+    Hawaii:"Fiji",
+    Antarctica:"Greenland",
+    "Las Vegas":"Macau",
+    Yellowstone:"Banff",
+    London:"Dublin",
+    Rome:"Athens",
+    Bali:"Phuket",
+    Iceland:"Norway",
+    Dubai:"Doha",
+
+    Umbrella:"Raincoat",
+    Toothbrush:"Comb",
+    Backpack:"Duffel Bag",
+    Stapler:"Hole Punch",
+    Pillow:"Blanket",
+    Flashlight:"Lantern",
+    Mirror:"Window",
+    Ladder:"Step Stool",
+    Blender:"Food Processor",
+    Wallet:"Purse",
+    Scissors:"Box Cutter",
+    Candle:"Lava Lamp",
+    Thermostat:"Smoke Detector",
+    Keyboard:"Remote Control",
+    Suitcase:"Duffel Bag",
+    Broom:"Mop",
+    Headphones:"Earbuds",
+    Calendar:"Planner",
+    Doorbell:"Intercom",
+    Kettle:"Toaster",
+
+    Firefighter:"Paramedic",
+    Dentist:"Orthodontist",
+    Pilot:"Air Traffic Controller",
+    Chef:"Baker",
+    Electrician:"Plumber",
+    Librarian:"Archivist",
+    Plumber:"Electrician",
+    Vet:"Zookeeper",
+    Journalist:"Editor",
+    Architect:"Engineer",
+    Lifeguard:"Coast Guard",
+    Barista:"Bartender",
+    Surgeon:"Paramedic",
+    Mechanic:"Machinist",
+    Teacher:"Tutor",
+    Photographer:"Videographer",
+    Farmer:"Rancher",
+    Accountant:"Banker",
+    Tailor:"Seamstress",
+    Zookeeper:"Vet",
+
+    "Pac-Man":"Frogger",
+    Tetris:"Bejeweled",
+    "Space Invaders":"Galaga",
+    Pinball:"Skee-Ball",
+    Joystick:"Game Controller",
+    "Game Over":"You Died",
+    "High Score":"Leaderboard",
+    "Power-Up":"Buff",
+    "Boss Fight":"Mini-Boss",
+    Checkpoint:"Save Point",
+    "Extra Life":"Continue",
+    "Cheat Code":"Easter Egg",
+    "Final Level":"Bonus Level",
+    "Arcade Token":"Quarter",
+    "Pixel Art":"Vector Art",
+    Speedrun:"Time Trial",
+    "Side Quest":"Fetch Quest",
+    "Loading Screen":"Cutscene",
+    "Save Point":"Checkpoint",
+    Combo:"Chain Kill"
+};
+
+const eliminated = new Set();
+
+function allWords() {
+    let result = [];
+
+    for (const category in DECKS) {
+        for (const word of DECKS[category]) {
+            result.push({
+                word,
+                category,
+                hint: HINTS[word] || "",
+                decoy: DECOYS[word] || ""
+            });
+        }
+    }
+
+    return result;
+}
+
+function score(item, search) {
+
+    if (!search.trim())
+        return Math.floor(Math.random() * 35) + 60;
+
+    const q = search.toLowerCase();
+
+    let score = 0;
+
+    const fields = [
+        item.word,
+        item.hint,
+        item.decoy,
+        item.category
+    ];
+
+    fields.forEach((field, index) => {
+
+        const value = field.toLowerCase();
+
+        if (value.includes(q)) {
+            score += index === 0 ? 100 : 65;
+        }
+
+        q.split(/\s+/).forEach(token => {
+            if (token.length > 2 && value.includes(token))
+                score += 20;
+        });
+    });
+
+    return Math.min(score, 99);
+}
+
+function render() {
+
+    const category = document.getElementById("category").value;
+    const search = document.getElementById("search").value;
+
+    let words = allWords();
+
+    if (category !== "ALL") {
+        words = words.filter(x => x.category === category);
+    }
+
+    words = words
+        .map(x => ({
+            ...x,
+            score: score(x, search)
+        }))
+        .filter(x => {
+            if (!search.trim()) return true;
+
+            const haystack =
+                `${x.word} ${x.hint} ${x.decoy} ${x.category}`.toLowerCase();
+
+            return haystack.includes(search.toLowerCase()) ||
+                   search.toLowerCase().split(/\s+/).some(
+                       token => token.length > 2 && haystack.includes(token)
+                   );
+        })
+        .sort((a,b) => b.score - a.score);
+
+    document.getElementById("count").textContent = words.length;
+    document.getElementById("eliminated").textContent = eliminated.size;
+    document.getElementById("deckName").textContent = category;
+
+    const results = document.getElementById("results");
+    results.innerHTML = "";
+
+    words.forEach(item => {
+
+        const card = document.createElement("div");
+
+        card.className =
+            "card " + (eliminated.has(item.word) ? "eliminated" : "");
+
+        card.innerHTML = `
+            <div class="tag">${item.category}</div>
+
+            <div class="word">${item.word}</div>
+
+            <div class="detail">
+                REAL HINT:
+                <span>${item.hint}</span>
+            </div>
+
+            <div class="detail">
+                DECOY:
+                <span>${item.decoy}</span>
+            </div>
+
+            <div class="confidence">
+                <div style="width:${item.score}%"></div>
+            </div>
+
+            <div class="detail">
+                MATCH CONFIDENCE:
+                <span>${item.score}%</span>
+            </div>
+
+            <button onclick="toggleEliminate('${escapeWord(item.word)}')">
+                ${eliminated.has(item.word)
+                    ? "RESTORE CANDIDATE"
+                    : "ELIMINATE"}
+            </button>
+        `;
+
+        results.appendChild(card);
+    });
+
+    updateAnalysis(words, search);
+}
+
+function escapeWord(word) {
+    return word.replace(/'/g, "\\'");
+}
+
+function toggleEliminate(word) {
+
+    if (eliminated.has(word)) {
+        eliminated.delete(word);
+    } else {
+        eliminated.add(word);
+    }
+
+    render();
+}
+
+function updateAnalysis(words, search) {
+
+    const box = document.getElementById("analysis");
+
+    if (!search.trim()) {
+        box.textContent =
+            "> Awaiting intelligence input...";
+        return;
+    }
+
+    if (!words.length) {
+        box.innerHTML =
+            `<span class="warning">> NO MATCHES. THE IMPOSTER HAS ESCAPED.</span>`;
+        return;
+    }
+
+    const top = words[0];
+
+    const messages = [
+        `> Strongest candidate: ${top.word}`,
+        `> Probability model converges on ${top.word}`,
+        `> Linguistic evidence favors ${top.word}`,
+        `> Cross-referencing clue database... ${top.word} looks suspicious`,
+        `> Candidate ${top.word} exhibits anomalously high semantic correlation`
+    ];
+
+    box.textContent =
+        messages[Math.floor(Math.random() * messages.length)];
+}
+
+document
+    .getElementById("category")
+    .addEventListener("change", render);
+
+document
+    .getElementById("search")
+    .addEventListener("input", render);
+
+render();
+
+</script>
+
+</body>
+</html>
