@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MASTER_OOGWAY'S_SCRIBE</title>
+
+<style>
+    * { box-sizing: border-box; }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        background:
+            radial-gradient(circle at top left, #000000, transparent 35%),
+            radial-gradient(circle at bottom right, #000000, transparent 35%),
+            #000000;
+        color: #e7e9ee;
+    }
+
+    .container {
+        width: min(1100px, 94%);
+        margin: auto;
+        padding: 40px 0;
+    }
+
+    header { margin-bottom: 30px; }
+
+    .logo {
+        font-family: monospace;
+        letter-spacing: 4px;
+        color: #65d8ff;
+        font-size: 13px;
+    }
+
+    h1 {
+        margin: 8px 0;
+        font-size: clamp(32px, 6vw, 58px);
+        letter-spacing: -2px;
+    }
+
+    .subtitle { color: #858b9c; max-width: 700px; }
+
+    .panel {
+        background: rgba(18, 21, 30, .82);
+        border: 1px solid #292e3d;
+        border-radius: 18px;
+        padding: 22px;
+        margin-bottom: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.25);
+        backdrop-filter: blur(14px);
+    }
+
+    .controls {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+    }
+
+    @media(max-width: 700px) {
+        .controls { grid-template-columns: 1fr; }
+    }
+
+    label {
+        display: block;
+        font-size: 12px;
+        color: #858b9c;
+        margin-bottom: 7px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    select, input, textarea {
+        width: 100%;
+        padding: 13px 14px;
+        background: #0d1017;
+        border: 1px solid #303646;
+        color: white;
+        border-radius: 10px;
+        outline: none;
+        font-size: 15px;
+    }
+
+    textarea {
+        min-height: 360px;
+        resize: vertical;
+        font: 12px monospace;
+        line-height: 1.5;
+    }
+
+    select:focus, input:focus, textarea:focus {
+        border-color: #65d8ff;
+    }
+
+    button {
+        margin-top: 12px;
+        width: 100%;
+        padding: 11px;
+        border: 1px solid #343b4c;
+        background: #171b25;
+        color: #bbbfc9;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: #202634;
+        color: white;
+    }
+
+    button.danger {
+        border-color: #613443;
+        color: #ff7189;
+    }
+
+    button.danger:hover {
+        background: #2a1720;
+        color: #ff9bad;
+    }
+
+    .stats {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+    }
+
+    .stat {
+        padding: 10px 14px;
+        background: #0e1118;
+        border: 1px solid #292e3d;
+        border-radius: 10px;
+        font-family: monospace;
+        font-size: 13px;
+    }
+
+    .stat strong { color: #65d8ff; }
+
+    .analysis {
+        font-family: monospace;
+        color: #65d8ff;
+        min-height: 24px;
+    }
+
+    .warning { color: #ff7189; }
+
+    .footer {
+        text-align: center;
+        color: #4e5463;
+        font-size: 11px;
+        font-family: monospace;
+        margin-top: 30px;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <div class="logo">MASTER_OOGWAY'S_SCRIBE</div>
+    <h1>MASTER OOGWAY // SCRIBE</h1>
+    <div class="subtitle">
+        Direct Firebase room-state editor for authorized LARP IT testing.
+    </div>
+</header>
+
+<div class="panel">
+    <div class="controls">
+        <div>
+            <label>Room Code</label>
+            <input id="roomCode" placeholder="e.g. VOLT95" maxlength="32" autocomplete="off">
+        </div>
+
+        <div>
+            <label>Database Path</label>
+            <input value="/larpit/[ROOMCODE]" disabled>
+        </div>
+    </div>
+
+    <div class="controls" style="margin-top:15px">
+        <div>
+            <button id="read">READ ROOM ▶</button>
+        </div>
+        <div>
+            <button id="patch">PATCH DATABASE ▶</button>
+        </div>
+    </div>
+
+    <button id="put" class="danger">REPLACE ENTIRE ROOM (PUT) ⚠</button>
+
+    <div id="status" class="analysis" style="margin-top:16px">
+        > Enter a room code and read the database...
+    </div>
+</div>
+
+<div class="panel">
+    <label>JSON Editor</label>
+    <textarea id="editor" spellcheck="false">{
+  "word": "example"
+}</textarea>
+</div>
+
+<div class="panel">
+    <div class="stats">
+        <div class="stat">METHOD: <strong id="method">—</strong></div>
+        <div class="stat">HTTP: <strong id="http">—</strong></div>
+        <div class="stat">ROOM: <strong id="room">—</strong></div>
+    </div>
+
+    <div class="analysis" id="response">
+        Awaiting database operation...
+    </div>
+</div>
+
+<div class="footer">
+    LARP DATABASE CORE // MASTER OOGWAY'S SCRIBE // v1.0
+</div>
+
+</div>
+
+<script>
+const DB_BASE =
+    "https://gamenight-34130-default-rtdb.firebaseio.com/larpit/";
+
+const $ = id => document.getElementById(id);
+
+function esc(value) {
+    return String(value ?? "").replace(/[&<>"']/g, c => ({
+        "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+    }[c]));
+}
+
+function getRoom() {
+    return $("roomCode").value.trim().toUpperCase();
+}
+
+function parseEditor() {
+    try {
+        return JSON.parse($("editor").value);
+    } catch (e) {
+        throw new Error("INVALID JSON: " + e.message);
+    }
+}
+
+async function readRoom() {
+    const code = getRoom();
+
+    if (!code) {
+        $("status").innerHTML =
+            '<span class="warning">> NO ROOM CODE PROVIDED.</span>';
+        return;
+    }
+
+    $("status").textContent = `> READING larpit/${code}...`;
+    $("method").textContent = "GET";
+    $("room").textContent = code;
+
+    try {
+        const response = await fetch(
+            DB_BASE + encodeURIComponent(code) + ".json",
+            { method: "GET", cache: "no-store" }
+        );
+
+        $("http").textContent = response.status;
+
+        if (!response.ok)
+            throw new Error(`HTTP ${response.status}`);
+
+        const data = await response.json();
+
+        $("editor").value = JSON.stringify(data, null, 2);
+
+        $("status").innerHTML =
+            `> ROOM <strong>${esc(code)}</strong> LOADED.`;
+
+        $("response").textContent =
+            data == null
+                ? "> DATABASE RETURNED NULL."
+                : "> DATABASE STATE LOADED INTO EDITOR.";
+
+    } catch (err) {
+        $("status").innerHTML =
+            `<span class="warning">> READ FAILED: ${esc(err.message)}</span>`;
+        $("response").textContent = "> Operation failed.";
+    }
+}
+
+async function writeRoom(method) {
+    const code = getRoom();
+
+    if (!code) {
+        $("status").innerHTML =
+            '<span class="warning">> NO ROOM CODE PROVIDED.</span>';
+        return;
+    }
+
+    let payload;
+
+    try {
+        payload = parseEditor();
+    } catch (err) {
+        $("status").innerHTML =
+            `<span class="warning">> ${esc(err.message)}</span>`;
+        return;
+    }
+
+    const action = method === "PATCH" ? "PATCHING" : "REPLACING";
+
+    $("status").textContent =
+        `> ${action} larpit/${code}...`;
+
+    $("method").textContent = method;
+    $("room").textContent = code;
+
+    try {
+        const response = await fetch(
+            DB_BASE + encodeURIComponent(code) + ".json",
+            {
+                method,
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(payload)
+            }
+        );
+
+        $("http").textContent = response.status;
+
+        const text = await response.text();
+
+        if (!response.ok)
+            throw new Error(`HTTP ${response.status}: ${text}`);
+
+        $("status").innerHTML =
+            `> <strong>${method}</strong> ACCEPTED FOR ROOM <strong>${esc(code)}</strong>.`;
+
+        $("response").textContent =
+            text
+                ? "> SERVER RESPONSE: " + text
+                : "> WRITE ACCEPTED. EMPTY SERVER RESPONSE.";
+
+    } catch (err) {
+        $("status").innerHTML =
+            `<span class="warning">> WRITE FAILED: ${esc(err.message)}</span>`;
+        $("response").textContent = "> Operation failed.";
+    }
+}
+
+$("read").addEventListener("click", readRoom);
+
+$("patch").addEventListener("click", () => writeRoom("PATCH"));
+
+$("put").addEventListener("click", () => {
+    if (!confirm(
+        "PUT replaces the entire room object. Continue?"
+    )) return;
+
+    writeRoom("PUT");
+});
+
+$("roomCode").addEventListener("keydown", e => {
+    if (e.key === "Enter") readRoom();
+});
+</script>
+
+</body>
+</html>
