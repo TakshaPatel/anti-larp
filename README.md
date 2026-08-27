@@ -54,6 +54,11 @@ https://gamenight-34130-default-rtdb.firebaseio.com/larpit/[ROOMCODE].json
   'https://gamenight-34130-default-rtdb.firebaseio.com/larpit/[ROOMCODE].json' \
   -H 'Content-Type: application/json' \
   --data '{"word":"ImDaBest"}'`
+
+
+##### To delete:
+`curl -i -X DELETE \
+  'https://gamenight-34130-default-rtdb.firebaseio.com/larpit/[ROOMCODE].json'`
          
   
 
