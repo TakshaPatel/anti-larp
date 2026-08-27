@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>REALITY: ANTI_LARP ENGINE</title>
+
+<style>
+    * {
+        box-sizing: border-box;
+    }
+
+    body {
+        margin: 0;
+        min-height: 100vh;
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        background:
+            radial-gradient(circle at top left, #000000, transparent 35%),
+            radial-gradient(circle at bottom right, #000000, transparent 35%),
+            #000000;
+        color: #e7e9ee;
+    }
+
+    .container {
+        width: min(1100px, 94%);
+        margin: auto;
+        padding: 40px 0;
+    }
+
+    header {
+        margin-bottom: 30px;
+    }
+
+    .logo {
+        font-family: monospace;
+        letter-spacing: 4px;
+        color: #65d8ff;
+        font-size: 13px;
+    }
+
+    h1 {
+        margin: 8px 0;
+        font-size: clamp(32px, 6vw, 58px);
+        letter-spacing: -2px;
+    }
+
+    .subtitle {
+        color: #858b9c;
+        max-width: 700px;
+    }
+
+    .panel {
+        background: rgba(18, 21, 30, .82);
+        border: 1px solid #292e3d;
+        border-radius: 18px;
+        padding: 22px;
+        margin-bottom: 20px;
+        box-shadow: 0 20px 60px rgba(0,0,0,.25);
+        backdrop-filter: blur(14px);
+    }
+
+    .controls {
+        display: grid;
+        grid-template-columns: 1fr 2fr;
+        gap: 15px;
+    }
+
+    @media(max-width: 700px) {
+        .controls {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    label {
+        display: block;
+        font-size: 12px;
+        color: #858b9c;
+        margin-bottom: 7px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+    }
+
+    select,
+    input {
+        width: 100%;
+        padding: 13px 14px;
+        background: #0d1017;
+        border: 1px solid #303646;
+        color: white;
+        border-radius: 10px;
+        outline: none;
+        font-size: 15px;
+    }
+
+    select:focus,
+    input:focus {
+        border-color: #65d8ff;
+    }
+
+    .stats {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-bottom: 18px;
+    }
+
+    .stat {
+        padding: 10px 14px;
+        background: #0e1118;
+        border: 1px solid #292e3d;
+        border-radius: 10px;
+        font-family: monospace;
+        font-size: 13px;
+    }
+
+    .stat strong {
+        color: #65d8ff;
+    }
+
+    .results {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 12px;
+    }
+
+    .card {
+        position: relative;
+        padding: 17px;
+        border-radius: 13px;
+        background: #10131b;
+        border: 1px solid #292e3d;
+        transition: .15s;
+    }
+
+    .card:hover {
+        transform: translateY(-2px);
+        border-color: #485269;
+    }
+
+    .card.eliminated {
+        opacity: .3;
+        filter: grayscale(1);
+    }
+
+    .word {
+        font-size: 20px;
+        font-weight: 700;
+        margin-bottom: 12px;
+    }
+
+    .tag {
+        display: inline-block;
+        font-size: 10px;
+        font-family: monospace;
+        padding: 4px 7px;
+        border-radius: 5px;
+        background: #202635;
+        color: #8fdbff;
+        margin-bottom: 10px;
+    }
+
+    .detail {
+        font-size: 12px;
+        color: #8c92a1;
+        margin: 5px 0;
+    }
+
+    .detail span {
+        color: #d8dbe3;
+    }
+
+    button {
+        margin-top: 12px;
+        width: 100%;
+        padding: 9px;
+        border: 1px solid #343b4c;
+        background: #171b25;
+        color: #bbbfc9;
+        border-radius: 8px;
+        cursor: pointer;
+    }
+
+    button:hover {
+        background: #202634;
+        color: white;
+    }
+
+    .confidence {
+        margin-top: 12px;
+        height: 5px;
+        background: #252a36;
+        border-radius: 20px;
+        overflow: hidden;
+    }
+
+    .confidence div {
+        height: 100%;
+        background: #65d8ff;
+        width: 50%;
+    }
+
+    .analysis {
+        font-family: monospace;
+        color: #65d8ff;
+        min-height: 24px;
+    }
+
+    .warning {
+        color: #ff7189;
+    }
+
+    .footer {
+        text-align: center;
+        color: #4e5463;
+        font-size: 11px;
+        font-family: monospace;
+        margin-top: 30px;
+    }
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<header>
+    <h1>REALITY // ROOM INTEL</h1>
+    <div class="subtitle">
+        Query a LARP IT room and display the game state exposed to the client.
+    </div>
+</header>
+
+<div class="panel">
+
+    <div class="controls">
+        <div>
+            <label>Room Code</label>
+            <input id="roomCode" placeholder="e.g. ABC123" maxlength="32" autocomplete="off">
+        </div>
+
+        <div>
+            <label>Firebase Room</label>
+            <button id="lookup">QUERY ROOM ▶</button>
+        </div>
+    </div>
+
+    <div id="status" class="analysis" style="margin-top:16px">
+        > Enter a room code and query the database...
+    </div>
+
+</div>
+
+<div class="panel" id="intelPanel" style="display:none">
+    <div class="stats">
+        <div class="stat">PHASE: <strong id="phase">—</strong></div>
+        <div class="stat">ROUND: <strong id="round">—</strong></div>
+        <div class="stat">PLAYERS: <strong id="playerCount">—</strong></div>
+    </div>
+
+    <div class="results" id="intel"></div>
+</div>
+
+<div class="panel">
+
+    <div class="stats">
+        <div class="stat">
+            CANDIDATES:
+            <strong id="count">0</strong>
+        </div>
+
+        <div class="stat">
+            ELIMINATED:
+            <strong id="eliminated">0</strong>
+        </div>
+
+        <div class="stat">
+            DECK:
+            <strong id="deckName">ALL</strong>
+        </div>
+    </div>
+
+    <div class="analysis" id="analysis">
+        Initializing deduction engine...
+    </div>
+
+</div>
+
+<div class="panel">
+    <div class="results" id="results"></div>
+</div>
+
+<div class="footer">
+    LARP ANALYSIS CORE // FIREBASE ROOM INSPECTOR // v0.2
+</div>
+
+</div>
+
+<script>
+const DB_BASE =
+    "https://gamenight-34130-default-rtdb.firebaseio.com/larpit/";
+
+const $ = id => document.getElementById(id);
+
+function esc(value) {
+    return String(value ?? "").replace(/[&<>"']/g, c => ({
+        "&":"&amp;", "<":"&lt;", ">":"&gt;", '"':"&quot;", "'":"&#39;"
+    }[c]));
+}
+
+function card(label, value, cls = "") {
+    return `
+        <div class="card ${cls}">
+            <div class="tag">${esc(label)}</div>
+            <div class="detail" style="font-size:15px; color:#d8dbe3; word-break:break-word">
+                ${esc(value)}
+            </div>
+        </div>
+    `;
+}
+
+function jsonCard(label, value) {
+    return `
+        <div class="card">
+            <div class="tag">${esc(label)}</div>
+            <pre style="white-space:pre-wrap; word-break:break-word; color:#d8dbe3; margin:8px 0 0; font:12px monospace">${esc(JSON.stringify(value, null, 2))}</pre>
+        </div>
+    `;
+}
+
+async function lookupRoom() {
+    const code = $("roomCode").value.trim().toUpperCase();
+    const status = $("status");
+    const panel = $("intelPanel");
+    const intel = $("intel");
+
+    panel.style.display = "none";
+    intel.innerHTML = "";
+
+    if (!code) {
+        status.innerHTML = '<span class="warning">> NO ROOM CODE PROVIDED.</span>';
+        return;
+    }
+
+    status.textContent = `> QUERYING larpit/${code}...`;
+
+    try {
+        const response = await fetch(DB_BASE + encodeURIComponent(code) + ".json", {
+            method: "GET",
+            cache: "no-store"
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (!data) {
+            status.innerHTML = '<span class="warning">> ROOM NOT FOUND OR EMPTY.</span>';
+            return;
+        }
+
+        const players = Array.isArray(data.players)
+            ? data.players
+            : (data.players && typeof data.players === "object"
+                ? Object.values(data.players) : []);
+
+        const larperIds = Array.isArray(data.larperIds)
+            ? data.larperIds
+            : (data.larperIds && typeof data.larperIds === "object"
+                ? Object.values(data.larperIds) : []);
+
+        $("phase").textContent = data.phase ?? "—";
+        $("round").textContent = data.round ?? "—";
+        $("playerCount").textContent = players.length;
+
+        const larperNames = players
+            .filter(p => larperIds.includes(p.id))
+            .map(p => p.name || p.id);
+
+        const outNames = players
+            .filter(p => (data.out || []).includes(p.id))
+            .map(p => p.name || p.id);
+
+        intel.innerHTML = [
+            card("REAL WORD", data.word ?? "not exposed / null"),
+            card("CATEGORY", data.category ?? "—"),
+            card("HINT", data.hint ?? "—"),
+            card("DECOY", data.decoy ?? "—"),
+            card("LARPER(S)", larperNames.length ? larperNames.join(", ") : "none"),
+            card("ELIMINATED", outNames.length ? outNames.join(", ") : "none"),
+            card("GUESS", data.guess ?? "—"),
+            card("GUESS CORRECT", data.guessOk == null ? "—" : data.guessOk),
+            card("GAME RESULT", data.larpersWon == null ? "—" :
+                (data.larpersWon ? "LARPER WINS" : "CHUDS WIN")),
+            jsonCard("PLAYERS", players),
+            jsonCard("VOTES", data.votes ?? {}),
+            jsonCard("CLUES", data.clues ?? [])
+        ].join("");
+
+        panel.style.display = "block";
+        status.innerHTML =
+            `> ROOM <strong>${esc(code)}</strong> RETRIEVED. ` +
+            `RAW CLIENT-VISIBLE STATE EXTRACTED.`;
+
+    } catch (err) {
+        console.error(err);
+        status.innerHTML =
+            `<span class="warning">> QUERY FAILED: ${esc(err.message)}</span>`;
+    }
+}
+
+$("lookup").addEventListener("click", lookupRoom);
+
+$("roomCode").addEventListener("keydown", e => {
+    if (e.key === "Enter") lookupRoom();
+});
+</script>
+
+</body>
+</html>
