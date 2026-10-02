@@ -1,7 +1,8 @@
 # Game:
 larpit.netlify.app
 
-## I will inform game owner
+## Current Progress:
+I informed my friend about these vulns, and he has patched it now :)
 
 ## Pentested Vulns:
 
